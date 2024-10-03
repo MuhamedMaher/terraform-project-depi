@@ -1,0 +1,53 @@
+---
+- name: Update apt package index
+  apt:
+    update_cache: yes
+  when: ansible_os_family == "Debian"
+
+- name: Install required packages
+  apt:
+    name:
+      - apt-transport-https
+      - ca-certificates
+      - curl
+      - software-properties-common
+    state: present
+  when: ansible_os_family == "Debian"
+
+- name: Add Docker's official GPG key
+  command: curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
+  when: ansible_os_family == "Debian"
+
+- name: Set up the stable Docker repository
+  command: add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
+  when: ansible_os_family == "Debian"
+
+- name: Update the apt package index after Docker repository addition
+  apt:
+    update_cache: yes
+  when: ansible_os_family == "Debian"
+
+- name: Install Docker
+  apt:
+    name: docker-ce
+    state: present
+  when: ansible_os_family == "Debian"
+
+- name: Start Docker service
+  service:
+    name: docker
+    state: started
+    enabled: yes
+- name: Pull the Nginx image
+  docker_image:
+    name: nginx
+    source: pull
+
+- name: Run Nginx container
+  docker_container:
+    name: nginx
+    image: nginx
+    state: started
+    ports:
+      - "80:80"
+
